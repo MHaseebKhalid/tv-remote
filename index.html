@@ -79,6 +79,18 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(140px);background:#2c2c38;padding:10px 18px;border-radius:999px;font-size:14px;transition:transform .25s}
 .toast.on{transform:translateX(-50%) translateY(0)}
 .off{opacity:.5}
+.pad{position:relative;width:min(260px,72vw);aspect-ratio:1;margin:6px auto 0;border-radius:50%;background:var(--card);display:grid;grid-template:1fr 1.1fr 1fr/1fr 1.1fr 1fr}
+.pad button{background:transparent;border-radius:16px;display:grid;place-items:center;color:var(--dim)}
+.pad button svg{width:30px;height:30px;fill:currentColor}
+.pad .ok{grid-area:2/2;background:var(--card2);border-radius:50%;color:var(--fg);font-weight:600;font-size:17px}
+.pad .u{grid-area:1/2}.pad .d{grid-area:3/2}.pad .l{grid-area:2/1}.pad .r{grid-area:2/3}
+.keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.keys button{height:48px;font-size:15px}
+.sect{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:20px 4px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:10px 16px;font-size:14px}
+.typer{display:flex;gap:8px}.typer input{flex:1;min-width:0}.typer button{padding:0 18px;flex:none}
+.power{background:#3a1d22;color:#ffb3b3}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -118,11 +130,32 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   </div>
 
   <div class="tabs" role="tablist">
-    <button role="tab" data-tab="history" aria-selected="true">History</button>
+    <button role="tab" data-tab="remote" aria-selected="true">Remote</button>
+    <button role="tab" data-tab="history" aria-selected="false">History</button>
     <button role="tab" data-tab="later" aria-selected="false">Watch later</button>
     <button role="tab" data-tab="apps" aria-selected="false">Apps</button>
   </div>
-  <div id="tab-history"><div class="list" id="historyList"></div><button class="link" id="clearHist" hidden>Clear history</button></div>
+  <div id="tab-remote">
+    <div class="pad">
+      <button class="u" data-key="up" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg></button>
+      <button class="l" data-key="left" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M14 7l-5 5 5 5z"/></svg></button>
+      <button class="ok" data-key="ok">OK</button>
+      <button class="r" data-key="right" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5z"/></svg></button>
+      <button class="d" data-key="down" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></button>
+    </div>
+    <div class="keys">
+      <button data-key="back">‹ Back</button>
+      <button data-key="home">Home</button>
+      <button data-key="settings">Settings</button>
+    </div>
+    <div class="sect">Input</div>
+    <div class="chips" id="inputs"><span class="empty" style="padding:4px">Loading inputs…</span></div>
+    <div class="sect">Type into a search box</div>
+    <form class="typer" id="typeForm"><input id="typeText" placeholder="Search text" maxlength="200" autocomplete="off"><button class="primary" type="submit">Send</button></form>
+    <div class="sect">Power</div>
+    <button class="wide power" id="powerOff" style="margin-top:0">Turn TV off</button>
+  </div>
+  <div id="tab-history" hidden><div class="list" id="historyList"></div><button class="link" id="clearHist" hidden>Clear history</button></div>
   <div id="tab-later" hidden>
     <form class="new" id="laterForm">
       <input id="lTitle" placeholder="Title, e.g. The Bear S3" maxlength="200">
@@ -155,8 +188,8 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
                   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
                   del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
 
-  let key = null, base = null, es = null, snap = null, snapAt = 0, lastMsgAt = 0, pending = null, tab = 'history';
-  let apps = []; try { apps = JSON.parse(store.get('apps') || '[]'); } catch (e) {}
+  let key = null, base = null, es = null, snap = null, snapAt = 0, lastMsgAt = 0, pending = null, tab = 'remote';
+  let apps = [], inputs = []; try { apps = JSON.parse(store.get('apps') || '[]'); inputs = JSON.parse(store.get('inputs') || '[]'); } catch (e) {}
 
   // ---------- crypto: same scheme as the TV app (Relay.java) ----------
   const te = new TextEncoder(), td = new TextDecoder();
@@ -196,13 +229,21 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
       pending = { r, resolve, timer: setTimeout(() => { if (pending?.r === r) { pending = null; setConn(false); resolve(null); } }, 20000) };
     });
   }
+  async function fire(path, body) {
+    const msg = await enc({ t: Date.now(), r: '', m: 'POST', p: path, b: body || {} });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try { const res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); if (res.status === 429) toast('Too many presses for the relay; wait a minute.'); return; }
+      catch (e) { await new Promise(ok => setTimeout(ok, 600)); }
+    }
+    toast('No internet connection to the relay.');
+  }
   function listen() {
     if (es) es.close();
     es = new EventSource(RELAY + base + 's/sse?since=latest');
     es.onmessage = async ev => {
       let m; try { m = await dec(JSON.parse(ev.data).message); } catch (e) { return; }
       lastMsgAt = Date.now();
-      if (m.a) { apps = m.a.filter(a => a.pkg !== 'com.gathin.tvhome'); store.set('apps', JSON.stringify(apps)); renderApps(); return; }
+      if (m.a) { apps = m.a.filter(a => a.pkg !== 'com.gathin.tvhome'); store.set('apps', JSON.stringify(apps)); if (m.i) { inputs = m.i; store.set('inputs', JSON.stringify(inputs)); renderInputs(); } renderApps(); return; }
       if (!m.s) return;
       if (!snap || m.t >= snapAt) { snap = m; snapAt = m.t; render(); }
       if (Date.now() - m.t < 120000) setConn(true);
@@ -212,7 +253,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   }
   function setConn(ok) {
     $('dot').className = 'dot ' + (ok === true ? 'on' : ok === false ? 'off' : '');
-    $('conn').textContent = ok === true ? 'TV online' : ok === false ? 'TV not answering' : 'Connecting…';
+    $('conn').textContent = ok === true ? 'TV online' : ok === false ? 'TV off or offline' : 'Connecting…';
   }
 
   // ---------- UI helpers ----------
@@ -274,6 +315,9 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     const l = snap?.l || [];
     $('laterList').innerHTML = l.length ? l.map(i => row(i, 'l')).join('') : '<div class="empty">Your watch-later list is empty. Save what is playing, a history item, or add a title above.</div>';
   }
+  function renderInputs() {
+    $('inputs').innerHTML = inputs.length ? inputs.map(i => `<button data-input="${esc(i.id)}">${esc(i.label)}</button>`).join('') : '<span class="empty" style="padding:4px">No inputs reported yet.</span>';
+  }
   function renderApps() {
     $('appsGrid').innerHTML = apps.length ? apps.map(a => `<button data-pkg="${esc(a.pkg)}">${badge(a.pkg, a.app)}${esc(a.app)}</button>`).join('') : '<div class="empty">Loading apps…</div>';
     const sel = $('lPkg'); while (sel.options.length > 1) sel.remove(1); apps.forEach(a => sel.add(new Option(a.app, a.pkg)));
@@ -320,14 +364,30 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
     tab = b.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-    ['history', 'later', 'apps'].forEach(t => $('tab-' + t).hidden = t !== tab);
-    if (tab !== 'history' && !apps.length) act('sync');
+    ['remote', 'history', 'later', 'apps'].forEach(t => $('tab-' + t).hidden = t !== tab);
+    if ((tab === 'apps' || tab === 'later' || tab === 'remote') && !apps.length) act('sync');
   });
-  $('forget').onclick = () => { store.del('code'); store.del('apps'); location.reload(); };
+  document.querySelectorAll('[data-key]').forEach(b => b.addEventListener('click', () => {
+    if (navigator.vibrate) navigator.vibrate(8);
+    if (snap?.s && snap.s.control === false) toast('Remote control is off on the TV (accessibility service).');
+    fire('/api/key', { key: b.dataset.key });
+  }));
+  $('inputs').addEventListener('click', e => { const b = e.target.closest('button[data-input]'); if (b) act('/api/input', { id: b.dataset.input }, 'Switching to ' + b.textContent, 'Could not switch input'); });
+  $('typeForm').onsubmit = e => {
+    e.preventDefault(); const t = $('typeText').value; if (!t.trim()) return;
+    act('/api/text', { text: t, submit: true }, 'Typed on the TV', 'No text box on screen. Open the app\'s search first.');
+  };
+  let offArmed = 0;
+  $('powerOff').onclick = () => {
+    if (Date.now() - offArmed > 4000) { offArmed = Date.now(); $('powerOff').textContent = 'Tap again to turn the TV off'; setTimeout(() => $('powerOff').textContent = 'Turn TV off', 4000); return; }
+    offArmed = 0; $('powerOff').textContent = 'Turn TV off';
+    act('/api/power', { on: false }, 'TV is turning off. Turn it back on with its remote.', 'Could not turn it off');
+  };
+  $('forget').onclick = () => { store.del('code'); store.del('apps'); store.del('inputs'); location.reload(); };
 
   // ---------- pairing / start ----------
   async function connect(code) {
-    await setup(code); listen(); $('pair').hidden = true; $('app').hidden = false; renderApps(); render();
+    await setup(code); listen(); $('pair').hidden = true; $('app').hidden = false; renderApps(); renderInputs(); render();
     const r = await act('sync');
     setConn(r !== null);
     return r !== null;

@@ -184,11 +184,16 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   async function send(path, body, method) {
     const r = Math.random().toString(36).slice(2, 10);
     const msg = await enc({ t: Date.now(), r, m: method || 'POST', p: path, b: body || {} });
-    const res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg });
+    let res = null, lastErr = null;
+    for (let attempt = 0; attempt < 3 && !res; attempt++) {
+      try { res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); }
+      catch (e) { lastErr = e; await new Promise(ok => setTimeout(ok, 800 * (attempt + 1))); }
+    }
+    if (!res) throw new Error('No internet connection to the relay. Try again.');
     if (!res.ok) throw new Error(res.status === 429 ? 'Too many requests to the relay; wait a minute.' : 'Relay error ' + res.status);
     return new Promise(resolve => {
       clearTimeout(pending?.timer);
-      pending = { r, resolve, timer: setTimeout(() => { if (pending?.r === r) { pending = null; setConn(false); resolve(null); } }, 10000) };
+      pending = { r, resolve, timer: setTimeout(() => { if (pending?.r === r) { pending = null; setConn(false); resolve(null); } }, 20000) };
     });
   }
   function listen() {
@@ -200,6 +205,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
       if (m.a) { apps = m.a.filter(a => a.pkg !== 'com.gathin.tvhome'); store.set('apps', JSON.stringify(apps)); renderApps(); return; }
       if (!m.s) return;
       if (!snap || m.t >= snapAt) { snap = m; snapAt = m.t; render(); }
+      if (Date.now() - m.t < 120000) setConn(true);
       if (pending && m.r === pending.r) { clearTimeout(pending.timer); const p = pending; pending = null; setConn(true); p.resolve(m); }
     };
     es.onerror = () => {}; // EventSource reconnects by itself
@@ -332,11 +338,10 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   $('pairBtn').onclick = async () => {
     const c = norm($('code').value);
     if (c.length !== 16) { $('pairErr').textContent = 'The code has 16 letters and digits.'; return; }
-    $('pairErr').textContent = ''; $('pairBtn').disabled = true; $('pairBtn').textContent = 'Connecting…';
+    $('pairErr').textContent = '';
+    store.set('code', c);
     const ok = await connect(c);
-    $('pairBtn').disabled = false; $('pairBtn').textContent = 'Connect';
-    if (ok) store.set('code', c);
-    else { $('app').hidden = true; $('pair').hidden = false; $('pairErr').textContent = 'No answer. Check the code, and that the TV is on and online.'; }
+    if (!ok && !snap) toast('No answer yet. Check the code on the TV, and that the TV is on.');
   };
   $('code').addEventListener('keydown', e => { if (e.key === 'Enter') $('pairBtn').click(); });
   setInterval(tick, 1000);

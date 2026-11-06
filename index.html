@@ -123,6 +123,30 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
 .danger{background:rgba(248,113,113,.1);color:#fca5a5;border:1px solid rgba(248,113,113,.22)}
 .danger.armed{background:#dc2626;color:#fff;border-color:#dc2626}
 
+/* remote: corners, rockers */
+.topbar{display:flex;gap:10px;align-items:center}
+.topbar .typer{flex:1;min-width:0}
+.topbar .typer input{height:52px;padding:0 16px}
+.topbar .typer .primary{width:52px;height:52px}
+.corner{width:52px;height:52px;display:grid;place-items:center;flex:none;background:var(--surface);border:1px solid var(--line)}
+.corner.mute.on{background:rgba(248,113,113,.16);color:#fca5a5;border-color:rgba(248,113,113,.3)}
+.corner.power{color:#fca5a5;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25)}
+.corner.power.armed{background:#dc2626;color:#fff;border-color:#dc2626}
+.console{display:flex;align-items:stretch;gap:12px;margin-top:22px}
+.console .pad{flex:1;width:auto;max-width:270px;margin:0 auto}
+.console .pad button svg.i{width:26px;height:26px}
+.console .pad .ok{font-size:16px}
+.rocker{width:60px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px;
+  background:var(--surface);border:1px solid var(--line);border-radius:999px}
+.rocker button{width:48px;height:48px;display:grid;place-items:center;background:var(--surface2)}
+.rocker button:active{background:var(--grad);color:#fff}
+.rocker .rl{text-align:center;font-variant-numeric:tabular-nums;line-height:1.15}
+.rocker .rl b{display:block;font-size:16px;font-weight:700}
+.rocker .rl small{font-size:10px;font-weight:600;color:var(--faint);letter-spacing:.08em}
+.selectwrap{position:relative}
+.selectwrap svg.i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--accent);pointer-events:none}
+.selectwrap select{height:56px;padding-left:50px;border-radius:18px;font-weight:500}
+
 /* lists */
 .list{display:flex;flex-direction:column;gap:8px}
 .row{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;display:flex;gap:12px;align-items:center}
@@ -222,30 +246,37 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
 
 
   <div id="tab-remote" class="pane">
-    <div class="pad">
-      <button class="u" data-key="up" aria-label="Up"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
-      <button class="l" data-key="left" aria-label="Left"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
-      <button class="ok" data-key="ok">OK</button>
-      <button class="r" data-key="right" aria-label="Right"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
-      <button class="d" data-key="down" aria-label="Down"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="topbar">
+      <button class="corner mute" data-cmd="mute" id="muteBtn" aria-label="Mute"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg></button>
+      <form class="typer" id="typeForm"><input id="typeText" placeholder="Search on the TV" maxlength="200" autocomplete="off" enterkeyhint="search" aria-label="Text to type on the TV"><button class="primary" type="submit" aria-label="Send"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></form>
+      <button class="corner power" id="powerOff" aria-label="Turn TV off"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+    </div>
+    <div class="console">
+      <div class="rocker" aria-label="Channel">
+        <button data-key="pageup" aria-label="Channel up (page up)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+        <div class="rl"><b>CH</b><small>PAGE</small></div>
+        <button data-key="pagedown" aria-label="Channel down (page down)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="pad">
+        <button class="u" data-key="up" aria-label="Up"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+        <button class="l" data-key="left" aria-label="Left"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+        <button class="ok" data-key="ok">OK</button>
+        <button class="r" data-key="right" aria-label="Right"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button class="d" data-key="down" aria-label="Down"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="rocker" aria-label="Volume">
+        <button data-cmd="volup" aria-label="Volume up"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="rl"><b id="volLvl">–</b><small>VOL</small></div>
+        <button data-cmd="voldown" aria-label="Volume down"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+      </div>
     </div>
     <div class="quick">
       <button class="qb" data-key="back"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Back</button>
       <button class="qb" data-key="home"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-5h4v5"/></svg>Home</button>
       <button class="qb" data-key="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
     </div>
-    <div class="vol">
-      <button data-cmd="voldown" aria-label="Volume down"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-      <div class="lvl"><small>Volume</small><span id="volLvl">–</span></div>
-      <button data-cmd="volup" aria-label="Volume up"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button class="mute" data-cmd="mute" id="muteBtn" aria-label="Mute"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg></button>
-    </div>
     <div class="sect"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8M12 18v3"/></svg>Input</div>
-    <div class="chips" id="inputs"><span class="note" style="margin:6px 4px">Asking the TV for its inputs…</span></div>
-    <div class="sect"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Type into a search box</div>
-    <form class="typer" id="typeForm"><input id="typeText" placeholder="Search text" maxlength="200" autocomplete="off" aria-label="Text to type on the TV"><button class="primary" type="submit" aria-label="Send"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
-    <div class="sect"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>Power</div>
-    <button class="wide danger" id="powerOff"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg><span>Turn TV off</span></button>
+    <div class="selectwrap"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8M12 18v3"/></svg><select id="inputs" class="select" aria-label="Switch input"><option value="">Switch input…</option></select></div>
   </div>
 
   <div id="tab-history" class="pane" hidden>
@@ -331,7 +362,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
 <script>
 (() => {
   'use strict';
-  const I = {"remote":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"7\" y=\"2\" width=\"10\" height=\"20\" rx=\"5\"/><circle cx=\"12\" cy=\"8\" r=\"2\"/><path d=\"M12 14h.01M12 17.5h.01\"/></svg>","history":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 12a9 9 0 1 0 3-6.7L3 8\"/><path d=\"M3 3v5h5\"/><path d=\"M12 7v5l3 2\"/></svg>","later":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/></svg>","laterplus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/><path d=\"M12 7v6M9 10h6\"/></svg>","apps":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\"/></svg>","photos":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"m21 16-5-5-9 9\"/></svg>","home":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10.5 12 3l9 7.5\"/><path d=\"M5.5 9v11h13V9\"/><path d=\"M10 20v-5h4v5\"/></svg>","back":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 0 11H11\"/></svg>","settings":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"/></svg>","up":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 15 6-6 6 6\"/></svg>","down":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg>","left":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m15 6-6 6 6 6\"/></svg>","right":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m9 6 6 6-6 6\"/></svg>","minus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14\"/></svg>","plus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>","mute":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 5 6 9H3v6h3l5 4z\"/><path d=\"m16 9 5 6M21 9l-5 6\"/></svg>","volume":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 5 6 9H3v6h3l5 4z\"/><path d=\"M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13\"/></svg>","input":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8M12 18v3\"/></svg>","keyboard":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><path d=\"M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10\"/></svg>","send":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg>","power":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v9\"/><path d=\"M6.3 6.3a8 8 0 1 0 11.4 0\"/></svg>","play":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 4v16l13-8z\"/></svg>","trash":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3\"/></svg>","x":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg>","check":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m5 12 5 5 9-10\"/></svg>","search":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg>","pencil":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 20h4L19 9l-4-4L4 16z\"/><path d=\"m13.5 6.5 4 4\"/></svg>","star":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z\"/></svg>","clock":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>","timer":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2 2M9 2h6\"/></svg>","shuffle":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5\"/></svg>","eye":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>","slides":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M21 7v10\"/></svg>","sparkle":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z\"/><path d=\"M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z\"/></svg>","link":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/></svg>","logout":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"m16 17 5-5-5-5M21 12H9\"/></svg>","tv":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M8 21h8\"/></svg>","film":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M7 3v18M17 3v18M3 8h4M17 8h4M3 16h4M17 16h4M3 12h18\"/></svg>","f_prev":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6h2v12H6zm3.5 6 8.5 6V6z\"/></svg>","f_next":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 18l8.5-6L6 6zm10-12v12h2V6z\"/></svg>","f_play":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M8 5v14l11-7z\"/></svg>","f_pause":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 5h4v14H6zm8 0h4v14h-4z\"/></svg>","f_rew":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V2L7 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z\"/></svg>","f_fwd":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V2l5 4.5-5 4.5V8a5 5 0 1 0 5 5h2a7 7 0 1 1-7-8z\"/></svg>"};
+  const I = {"remote":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"7\" y=\"2\" width=\"10\" height=\"20\" rx=\"5\"/><circle cx=\"12\" cy=\"8\" r=\"2\"/><path d=\"M12 14h.01M12 17.5h.01\"/></svg>","history":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 12a9 9 0 1 0 3-6.7L3 8\"/><path d=\"M3 3v5h5\"/><path d=\"M12 7v5l3 2\"/></svg>","later":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/></svg>","laterplus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/><path d=\"M12 7v6M9 10h6\"/></svg>","apps":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\"/></svg>","photos":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"m21 16-5-5-9 9\"/></svg>","home":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10.5 12 3l9 7.5\"/><path d=\"M5.5 9v11h13V9\"/><path d=\"M10 20v-5h4v5\"/></svg>","back":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 0 11H11\"/></svg>","settings":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"/></svg>","up":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 15 6-6 6 6\"/></svg>","down":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg>","left":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m15 6-6 6 6 6\"/></svg>","right":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m9 6 6 6-6 6\"/></svg>","minus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14\"/></svg>","plus":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>","mute":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 5 6 9H3v6h3l5 4z\"/><path d=\"m16 9 5 6M21 9l-5 6\"/></svg>","volume":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 5 6 9H3v6h3l5 4z\"/><path d=\"M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13\"/></svg>","input":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8M12 18v3\"/></svg>","keyboard":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><path d=\"M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10\"/></svg>","send":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg>","power":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v9\"/><path d=\"M6.3 6.3a8 8 0 1 0 11.4 0\"/></svg>","play":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 4v16l13-8z\"/></svg>","trash":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3\"/></svg>","x":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg>","check":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m5 12 5 5 9-10\"/></svg>","search":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg>","pencil":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 20h4L19 9l-4-4L4 16z\"/><path d=\"m13.5 6.5 4 4\"/></svg>","star":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z\"/></svg>","clock":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>","timer":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2 2M9 2h6\"/></svg>","shuffle":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5\"/></svg>","eye":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>","slides":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"14\" height=\"14\" rx=\"2\"/><path d=\"M21 7v10\"/></svg>","sparkle":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z\"/><path d=\"M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z\"/></svg>","link":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/></svg>","logout":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"m16 17 5-5-5-5M21 12H9\"/></svg>","tv":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M8 21h8\"/></svg>","bluetooth":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m7 7 10 10-5 5V2l5 5L7 17\"/></svg>","wifi":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0\"/><path d=\"M12 20h.01\"/></svg>","sun":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4\"/></svg>","picture":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M8 21h8\"/><path d=\"m6 14 4-4 3 3 2-2 3 3\"/></svg>","moon":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z\"/></svg>","phone":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"6\" y=\"2\" width=\"12\" height=\"20\" rx=\"3\"/><path d=\"M11 18h2\"/></svg>","chevup":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 15 6-6 6 6\"/></svg>","chevdown":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg>","film":"<svg class=\"i\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M7 3v18M17 3v18M3 8h4M17 8h4M3 16h4M17 16h4M3 12h18\"/></svg>","f_prev":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6h2v12H6zm3.5 6 8.5 6V6z\"/></svg>","f_next":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 18l8.5-6L6 6zm10-12v12h2V6z\"/></svg>","f_play":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M8 5v14l11-7z\"/></svg>","f_pause":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 5h4v14H6zm8 0h4v14h-4z\"/></svg>","f_rew":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V2L7 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z\"/></svg>","f_fwd":"<svg class=\"f\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V2l5 4.5-5 4.5V8a5 5 0 1 0 5 5h2a7 7 0 1 1-7-8z\"/></svg>"};
   const RELAY = 'https://ntfy.sh/';
   const $ = id => document.getElementById(id);
   const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -340,6 +371,16 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
 
   let key = null, base = null, es = null, snap = null, snapAt = 0, lastMsgAt = 0, pending = null, tab = 'remote';
   let apps = [], inputs = []; try { apps = JSON.parse(store.get('apps') || '[]'); inputs = JSON.parse(store.get('inputs') || '[]'); } catch (e) {}
+
+  // This phone, as the TV lists it: a random id kept in this browser, and the kind of device.
+  const DEV = (() => {
+    let id = store.get('dev'); if (!id) { id = Math.random().toString(36).slice(2, 12); store.set('dev', id); }
+    const ua = navigator.userAgent; let name = 'Phone';
+    if (/iPhone/.test(ua)) name = 'iPhone'; else if (/iPad/.test(ua)) name = 'iPad';
+    else if (/Android/.test(ua)) { const m = ua.match(/Android[^;)]*;\s*([^;)]+)\)/); name = m && m[1].trim() !== 'K' && m[1].length < 30 ? m[1].trim() : 'Android phone'; }
+    else if (/Macintosh/.test(ua)) name = 'Mac'; else if (/Windows/.test(ua)) name = 'Windows PC';
+    return { id, name };
+  })();
 
   // ---------- crypto: same scheme as the TV app (Relay.java) ----------
   const te = new TextEncoder(), td = new TextDecoder();
@@ -374,7 +415,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   // ---------- transport ----------
   async function send(path, body, method) {
     const r = Math.random().toString(36).slice(2, 10);
-    const msg = await enc({ t: Date.now(), r, m: method || 'POST', p: path, b: body || {} });
+    const msg = await enc({ t: Date.now(), r, m: method || 'POST', p: path, b: body || {}, i: DEV.id, d: DEV.name });
     let res = null, lastErr = null;
     for (let attempt = 0; attempt < 3 && !res; attempt++) {
       try { res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); }
@@ -388,7 +429,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
     });
   }
   async function fire(path, body) {
-    const msg = await enc({ t: Date.now(), r: '', m: 'POST', p: path, b: body || {} });
+    const msg = await enc({ t: Date.now(), r: '', m: 'POST', p: path, b: body || {}, i: DEV.id, d: DEV.name });
     for (let attempt = 0; attempt < 2; attempt++) {
       try { const res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); if (res.status === 429) toast('Too many presses for the relay; wait a minute.'); return; }
       catch (e) { await new Promise(ok => setTimeout(ok, 600)); }
@@ -444,7 +485,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
     $('nowSub').textContent = on ? [st.subtitle, st.title ? st.app : ''].filter(Boolean).join(' · ') : 'Start something on the TV';
     $('nowBadge').outerHTML = on ? badge(st.pkg, st.app).replace('class="art"', 'class="art" id="nowBadge"') : `<div class="art" id="nowBadge">${I.tv}</div>`;
     $('playIco').innerHTML = on && st.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
-    $('volLvl').textContent = st.volumeMax ? (st.muted ? 'Muted' : `${st.volume} / ${st.volumeMax}`) : '–';
+    $('volLvl').textContent = st.volumeMax ? (st.muted ? '✕' : st.volume) : '–';
     $('muteBtn').classList.toggle('on', !!st.muted); $('muteBtn').setAttribute('aria-label', st.muted ? 'Unmute' : 'Mute');
     tick();
     renderHistory(); renderLater();
@@ -476,7 +517,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
     $('laterList').innerHTML = l.length ? l.map(i => row(i, 'l')).join('') : empty('later', 'Your watch-later list is empty. Save what is playing, a history item, or add a title above.');
   }
   function renderInputs() {
-    $('inputs').innerHTML = inputs.length ? inputs.map(i => `<button data-input="${esc(i.id)}">${i.id === 'live' ? I.tv : I.input}${esc(i.label)}</button>`).join('') : '<span class="note" style="margin:6px 4px">Asking the TV for its inputs…</span>';
+    $('inputs').innerHTML = `<option value="">${inputs.length ? 'Switch input…' : 'Asking the TV for its inputs…'}</option>` + inputs.map(i => `<option value="${esc(i.id)}">${esc(i.label)}</option>`).join('');
   }
   function renderApps() {
     $('appsGrid').innerHTML = apps.length ? apps.map(a => `<button data-pkg="${esc(a.pkg)}">${badge(a.pkg, a.app)}<span>${esc(a.app)}</span></button>`).join('') : empty('apps', 'Asking the TV for its apps…');
@@ -624,19 +665,21 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
     if (snap?.s && snap.s.control === false) toast('Remote control is off on the TV (accessibility service).');
     fire('/api/key', { key: b.dataset.key });
   }));
-  $('inputs').addEventListener('click', e => { const b = e.target.closest('button[data-input]'); if (b) act('/api/input', { id: b.dataset.input }, 'Switching to ' + b.textContent, 'Could not switch input'); });
+  $('inputs').addEventListener('change', () => {
+    const sel = $('inputs'), id = sel.value, label = sel.options[sel.selectedIndex].text; if (!id) return;
+    sel.value = ''; act('/api/input', { id }, 'Switching to ' + label, 'Could not switch input');
+  });
   $('typeForm').onsubmit = e => {
     e.preventDefault(); const t = $('typeText').value; if (!t.trim()) return;
     act('/api/text', { text: t, submit: true }, 'Typed on the TV', 'No text box on screen. Open the app\'s search first.');
   };
   let offArmed = 0;
-  const offLabel = $('powerOff').querySelector('span');
   $('powerOff').onclick = () => {
     if (Date.now() - offArmed > 4000) {
-      offArmed = Date.now(); offLabel.textContent = 'Tap again to turn off'; $('powerOff').classList.add('armed');
-      setTimeout(() => { offLabel.textContent = 'Turn TV off'; $('powerOff').classList.remove('armed'); }, 4000); return;
+      offArmed = Date.now(); $('powerOff').classList.add('armed'); toast('Tap the red button again to turn the TV off');
+      setTimeout(() => $('powerOff').classList.remove('armed'), 4000); return;
     }
-    offArmed = 0; offLabel.textContent = 'Turn TV off'; $('powerOff').classList.remove('armed');
+    offArmed = 0; $('powerOff').classList.remove('armed');
     act('/api/power', { on: false }, 'TV is turning off. Turn it back on with its remote.', 'Could not turn it off');
   };
   $('forget').onclick = () => { store.del('code'); store.del('apps'); store.del('inputs'); location.reload(); };
@@ -665,6 +708,11 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   document.addEventListener('visibilitychange', () => { if (!document.hidden && key) { listen(); act('sync'); } });
 
   if (!window.crypto?.subtle) { $('pair').hidden = false; $('pairErr').textContent = 'Open this page over https.'; return; }
+  // A link with #code=… (the QR code on the TV) pairs this phone at once. The fragment never reaches a server.
+  const fromLink = (location.hash.match(/code=([A-Za-z0-9-]{16,19})/) || [])[1];
+  if (fromLink && norm(fromLink).length === 16) { store.set('code', norm(fromLink)); history.replaceState(null, '', location.pathname + location.search); }
+  // While the page is open, a heartbeat every 45 s, so the TV's quick settings can show this phone as connected.
+  setInterval(() => { if (key && !document.hidden) fire('/api/ping'); }, 45000);
   const saved = store.get('code');
   if (saved) connect(saved); else $('pair').hidden = false;
 })();

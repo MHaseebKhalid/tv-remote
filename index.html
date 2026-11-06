@@ -711,8 +711,9 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   // A link with #code=… (the QR code on the TV) pairs this phone at once. The fragment never reaches a server.
   const fromLink = (location.hash.match(/code=([A-Za-z0-9-]{16,19})/) || [])[1];
   if (fromLink && norm(fromLink).length === 16) { store.set('code', norm(fromLink)); history.replaceState(null, '', location.pathname + location.search); }
-  // While the page is open, a heartbeat every 45 s, so the TV's quick settings can show this phone as connected.
-  setInterval(() => { if (key && !document.hidden) fire('/api/ping'); }, 45000);
+  // While the page is open, a heartbeat every 4 minutes, so the TV's quick settings can show this phone as connected.
+  // Kept rare on purpose: ntfy.sh's free tier allows only a few hundred messages a day for the whole home.
+  setInterval(() => { if (key && !document.hidden) fire('/api/ping'); }, 240000);
   const saved = store.get('code');
   if (saved) connect(saved); else $('pair').hidden = false;
 })();

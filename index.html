@@ -10,6 +10,7 @@
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111118'/%3E%3Crect x='14' y='18' width='36' height='24' rx='4' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M26 48h12' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23111118'/%3E%3Crect x='40' y='50' width='100' height='66' rx='10' fill='none' stroke='%23fff' stroke-width='10'/%3E%3Cpath d='M72 134h36' stroke='%23fff' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <title>Living Room Remote</title>
 <style>
 /* Shared look of the local page (phone-remote/app/src/main/assets/index.html) and the hosted page
@@ -413,10 +414,28 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   }
 
   // ---------- transport ----------
+  // Main channel: HiveMQ's public MQTT broker over secure WebSockets (no account, no daily limit, ~0.4 s round trip).
+  // Fallback: ntfy.sh, used only while MQTT isn't connected. Both carry the same encrypted messages.
+  const MQTT_URL = 'wss://broker.hivemq.com:8884/mqtt';
+  let mq = null, mqOk = false, mqReady = null;
+  function connectMqtt() {
+    if (!window.mqtt || mq) return;
+    let ready; mqReady = new Promise(ok => { ready = ok; setTimeout(ok, 4000); });
+    mq = mqtt.connect(MQTT_URL, { clientId: 'tvr-ph-' + Math.random().toString(16).slice(2, 12), clean: true, keepalive: 60,
+      reconnectPeriod: 3000, connectTimeout: 10000 });
+    mq.on('connect', () => { mqOk = true; mq.subscribe('tvr/' + base + '/s'); ready(); });
+    mq.on('close', () => { mqOk = false; });
+    mq.on('message', (topic, payload) => onRelay(new TextDecoder().decode(payload)));
+  }
+  async function post(msg) {
+    if (mqOk) { mq.publish('tvr/' + base + '/c', msg); return { ok: true, status: 200 }; }
+    return fetch(RELAY + base + 'c', { method: 'POST', body: msg });
+  }
   async function send(path, body, method) {
     const r = Math.random().toString(36).slice(2, 10);
     const msg = await enc({ t: Date.now(), r, m: method || 'POST', p: path, b: body || {}, i: DEV.id, d: DEV.name });
     let res = null, lastErr = null;
+    if (mqOk) res = await post(msg);
     for (let attempt = 0; attempt < 3 && !res; attempt++) {
       try { res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); }
       catch (e) { lastErr = e; await new Promise(ok => setTimeout(ok, 800 * (attempt + 1))); }
@@ -431,7 +450,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   async function fire(path, body) {
     const msg = await enc({ t: Date.now(), r: '', m: 'POST', p: path, b: body || {}, i: DEV.id, d: DEV.name });
     for (let attempt = 0; attempt < 2; attempt++) {
-      try { const res = await fetch(RELAY + base + 'c', { method: 'POST', body: msg }); if (res.status === 429) toast('Too many presses for the relay; wait a minute.'); return; }
+      try { const res = await post(msg); if (res.status === 429) toast('Too many presses for the relay; wait a minute.'); return; }
       catch (e) { await new Promise(ok => setTimeout(ok, 600)); }
     }
     toast('No internet connection to the relay.');
@@ -439,8 +458,13 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   function listen() {
     if (es) es.close();
     es = new EventSource(RELAY + base + 's/sse?since=latest');
-    es.onmessage = async ev => {
-      let m; try { m = await dec(JSON.parse(ev.data).message); } catch (e) { return; }
+    es.onmessage = ev => { try { onRelay(JSON.parse(ev.data).message); } catch (e) {} };
+    es.onerror = () => {}; // EventSource reconnects by itself
+    connectMqtt();
+  }
+  /** A message from the TV, from either channel. */
+  async function onRelay(b64) {
+      let m; try { m = await dec(b64); } catch (e) { return; }
       lastMsgAt = Date.now();
       if (m.ph) { gotPhotos(m); if (pending && m.r === pending.r) { clearTimeout(pending.timer); const p = pending; pending = null; setConn(true); p.resolve(m); } return; }
       if (m.a) { apps = m.a.filter(a => a.pkg !== 'com.gathin.tvhome'); store.set('apps', JSON.stringify(apps)); if (m.i) { inputs = m.i; store.set('inputs', JSON.stringify(inputs)); renderInputs(); } renderApps(); return; }
@@ -448,8 +472,6 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
       if (!snap || m.t >= snapAt) { snap = m; snapAt = m.t; render(); }
       if (Date.now() - m.t < 120000) setConn(true);
       if (pending && m.r === pending.r) { clearTimeout(pending.timer); const p = pending; pending = null; setConn(true); p.resolve(m); }
-    };
-    es.onerror = () => {}; // EventSource reconnects by itself
   }
   function setConn(ok) {
     $('dot').className = 'dot ' + (ok === true ? 'on' : ok === false ? 'off' : '');
@@ -576,6 +598,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   let ph = null, thumbs = {}, thumbUrl = '';
   async function gotPhotos(m) {
     ph = m.ph; if (m.err) toast(m.err);
+    if (m.tb) { thumbs = {}; for (const id in m.tb) thumbs[id] = 'data:image/jpeg;base64,' + m.tb[id]; }
     renderPhotos();
     if (m.th && m.th !== thumbUrl && /^https:\/\/ntfy\.sh\/file\//.test(m.th)) {
       try {
@@ -637,7 +660,15 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   }
   /** Encrypted, uploaded to ntfy.sh as a file (kept there a few hours), then the TV is told where to fetch it. */
   async function uploadOne(file) {
-    const data = await encBytes(await shrink(file));
+    const jpeg = await shrink(file);
+    if (mqOk && jpeg.length < 700 * 1024) {
+      // Over MQTT the picture rides inside the encrypted message itself.
+      const r = await send('/api/photo/put', { name: file.name, data: b64(jpeg) });
+      if (r === null) throw new Error('The TV did not answer. Is it on?');
+      if (!r.ok) throw new Error(r.err || 'The TV could not add it.');
+      return;
+    }
+    const data = await encBytes(jpeg);
     let res = null;
     for (let attempt = 0; attempt < 3 && !res; attempt++) {
       try { res = await fetch(RELAY + base + 'f?filename=p.bin', { method: 'POST', body: new Blob([data]) }); }
@@ -687,6 +718,7 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   // ---------- pairing / start ----------
   async function connect(code) {
     await setup(code); listen(); $('pair').hidden = true; $('app').hidden = false; $('nav').hidden = false; renderApps(); renderInputs(); render();
+    if (mqReady) await mqReady; // a moment for MQTT, so the first message doesn't use up ntfy.sh's quota
     const r = await act('sync');
     setConn(r !== null);
     if (r !== null && !inputs.length) setTimeout(() => { if (!inputs.length) act('sync'); }, 6000);
@@ -711,9 +743,10 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   // A link with #code=… (the QR code on the TV) pairs this phone at once. The fragment never reaches a server.
   const fromLink = (location.hash.match(/code=([A-Za-z0-9-]{16,19})/) || [])[1];
   if (fromLink && norm(fromLink).length === 16) { store.set('code', norm(fromLink)); history.replaceState(null, '', location.pathname + location.search); }
-  // While the page is open, a heartbeat every 4 minutes, so the TV's quick settings can show this phone as connected.
-  // Kept rare on purpose: ntfy.sh's free tier allows only a few hundred messages a day for the whole home.
-  setInterval(() => { if (key && !document.hidden) fire('/api/ping'); }, 240000);
+  // While the page is open, a heartbeat so the TV's quick settings can show this phone as connected: every minute over
+  // MQTT, every 4 minutes when only ntfy.sh is up (its free tier allows a few hundred messages a day per home).
+  let beats = 0;
+  setInterval(() => { beats++; if (key && !document.hidden && (mqOk || beats % 4 === 0)) fire('/api/ping'); }, 60000);
   const saved = store.get('code');
   if (saved) connect(saved); else $('pair').hidden = false;
 })();

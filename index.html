@@ -91,6 +91,20 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
 .chips button{padding:10px 16px;font-size:14px}
 .typer{display:flex;gap:8px}.typer input{flex:1;min-width:0}.typer button{padding:0 18px;flex:none}
 .power{background:#3a1d22;color:#ffb3b3}
+.pics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pic{background:var(--card);border-radius:14px;overflow:hidden;position:relative}
+.pic .im{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--card2)}
+.pic .pb{display:flex;align-items:center;gap:4px;padding:6px 6px 6px 10px}
+.pic .pn{flex:1;min-width:0;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pic .pb button{width:34px;height:34px;font-size:15px;display:grid;place-items:center;flex:none}
+.pic.pinned{outline:2px solid var(--accent)}
+.pic .tag{position:absolute;top:6px;left:6px;background:var(--accent);color:#000;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border-radius:14px;padding:6px 6px 6px 14px;margin-bottom:8px}
+.setrow span{font-size:15px}
+.setrow select{width:auto;max-width:55%;background:var(--card2);border:0;padding:10px 12px}
+label.addpic{display:grid;place-items:center;height:48px;background:var(--accent);color:#000;font-weight:600;border-radius:999px;cursor:pointer;margin:0 0 12px}
+label.addpic input{display:none}
+.note{color:var(--dim);font-size:13px;margin:4px 4px 10px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -134,6 +148,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     <button role="tab" data-tab="history" aria-selected="false">History</button>
     <button role="tab" data-tab="later" aria-selected="false">Later</button>
     <button role="tab" data-tab="apps" aria-selected="false">Apps</button>
+    <button role="tab" data-tab="photos" aria-selected="false">Photos</button>
   </div>
   <div id="tab-remote">
     <div class="pad">
@@ -166,6 +181,28 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     <div class="list" id="laterList"></div>
   </div>
   <div id="tab-apps" hidden><div class="apps" id="appsGrid"></div></div>
+  <div id="tab-photos" hidden>
+    <label class="addpic">＋ Add pictures<input type="file" id="picFile" accept="image/*" multiple></label>
+    <div class="pics" id="picGrid"><div class="empty" style="grid-column:1/-1">Loading pictures…</div></div>
+    <div class="sect">Home screen wallpaper</div>
+    <div class="setrow"><span>Show pictures on Home</span><select id="wOn"><option value="1">On</option><option value="0">Off</option></select></div>
+    <div class="setrow" id="wRotRow"><span>Change picture every</span><select id="wRot">
+      <option value="5">5 minutes</option><option value="10">10 minutes</option><option value="30">30 minutes</option>
+      <option value="60">Hour</option><option value="180">3 hours</option><option value="1440">Day</option></select></div>
+    <div class="setrow" id="wOrdRow"><span>Order</span><select id="wOrd"><option value="1">Shuffle</option><option value="0">In order added</option></select></div>
+    <div class="note" id="pinNote"></div>
+    <div class="sect">Screensaver</div>
+    <div class="setrow"><span>Start screensaver after</span><select id="sDelay">
+      <option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option>
+      <option value="600">10 minutes</option><option value="900">15 minutes</option><option value="1800">30 minutes</option>
+      <option value="3600">1 hour</option><option value="0">Never</option></select></div>
+    <div class="setrow"><span>Each picture for</span><select id="sSlide">
+      <option value="5">5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option>
+      <option value="30">30 seconds</option><option value="60">1 minute</option><option value="300">5 minutes</option></select></div>
+    <div class="setrow"><span>Clock</span><select id="sClock"><option value="1">Show</option><option value="0">Hide</option></select></div>
+    <button class="wide" id="sStart" style="margin-top:4px">Start screensaver now</button>
+    <div class="note">Pictures travel encrypted through the relay, so each one takes a few seconds. It starts once the remote has been left alone that long on Home or over a paused app, never on HDMI or Live TV and never while something plays. It shows all your pictures with a slow zoom.</div>
+  </div>
   <button class="link" id="forget">Disconnect this phone</button>
 </section>
 </main>
@@ -212,6 +249,14 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     const all = unb64(s);
     return JSON.parse(td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: all.slice(0, 12) }, key, all.slice(12))));
   }
+  async function encBytes(buf) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, buf));
+    const all = new Uint8Array(12 + ct.length); all.set(iv); all.set(ct, 12); return all;
+  }
+  async function decBytes(all) {
+    return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: all.slice(0, 12) }, key, all.slice(12)));
+  }
 
   // ---------- transport ----------
   async function send(path, body, method) {
@@ -243,6 +288,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     es.onmessage = async ev => {
       let m; try { m = await dec(JSON.parse(ev.data).message); } catch (e) { return; }
       lastMsgAt = Date.now();
+      if (m.ph) { gotPhotos(m); if (pending && m.r === pending.r) { clearTimeout(pending.timer); const p = pending; pending = null; setConn(true); p.resolve(m); } return; }
       if (m.a) { apps = m.a.filter(a => a.pkg !== 'com.gathin.tvhome'); store.set('apps', JSON.stringify(apps)); if (m.i) { inputs = m.i; store.set('inputs', JSON.stringify(inputs)); renderInputs(); } renderApps(); return; }
       if (!m.s) return;
       if (!snap || m.t >= snapAt) { snap = m; snapAt = m.t; render(); }
@@ -364,9 +410,99 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
     tab = b.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-    ['remote', 'history', 'later', 'apps'].forEach(t => $('tab-' + t).hidden = t !== tab);
-    if ((tab === 'apps' || tab === 'later' || tab === 'remote') && (!apps.length || !inputs.length)) act('sync');
+    ['remote', 'history', 'later', 'apps', 'photos'].forEach(t => $('tab-' + t).hidden = t !== tab);
+    if (tab === 'photos') act('/api/photos');
+    else if (!apps.length || !inputs.length) act('sync');
   });
+
+  // ---------- pictures, wallpaper and screensaver ----------
+  let ph = null, thumbs = {}, thumbUrl = '';
+  async function gotPhotos(m) {
+    ph = m.ph; if (m.err) toast(m.err);
+    renderPhotos();
+    if (m.th && m.th !== thumbUrl && /^https:\/\/ntfy\.sh\/file\//.test(m.th)) {
+      try {
+        const r = await fetch(m.th);
+        const sheet = JSON.parse(td.decode(await decBytes(new Uint8Array(await r.arrayBuffer()))));
+        thumbs = {}; for (const id in sheet) thumbs[id] = 'data:image/jpeg;base64,' + sheet[id];
+        thumbUrl = m.th; renderPhotos();
+      } catch (e) {}
+    }
+  }
+  function setSel(sel, v) {
+    if (![...sel.options].some(o => o.value === v)) { const n = +v; sel.add(new Option(n >= 60 ? Math.round(n / 60) + ' min' : n + ' s', v)); }
+    sel.value = v;
+  }
+  function renderPhotos() {
+    if (!ph) return;
+    const pin = ph.wallpaper.pinned;
+    $('picGrid').innerHTML = ph.items.length ? ph.items.slice().reverse().map(p => `<div class="pic${p.id === pin ? ' pinned' : ''}" data-id="${esc(p.id)}">
+        ${thumbs[p.id] ? `<img class="im" src="${thumbs[p.id]}" alt="">` : '<div class="im"></div>'}${p.id === pin ? '<div class="tag">On Home</div>' : ''}
+        <div class="pb"><div class="pn">${esc(p.name)}</div>
+        <button data-a="pin" aria-label="${p.id === pin ? 'Stop keeping this on Home' : 'Keep this on Home'}">${p.id === pin ? '★' : '☆'}</button>
+        <button data-a="del" aria-label="Remove">✕</button></div></div>`).join('')
+      : '<div class="empty" style="grid-column:1/-1">No pictures yet. Add some: they become the Home screen wallpaper and the screensaver.</div>';
+    const w = ph.wallpaper, sv = ph.saver;
+    $('wOn').value = w.on ? '1' : '0'; setSel($('wRot'), String(w.rotate)); $('wOrd').value = w.shuffle ? '1' : '0';
+    $('wRotRow').hidden = $('wOrdRow').hidden = !!pin;
+    $('pinNote').textContent = pin ? 'One picture is kept on Home (★). Tap ★ again to go back to changing pictures.' : 'Tap ☆ on a picture to keep just that one on Home.';
+    setSel($('sDelay'), String(sv.delay)); setSel($('sSlide'), String(sv.slide)); $('sClock').value = sv.clock ? '1' : '0';
+  }
+  const delArmed = {};
+  $('picGrid').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !ph) return; const id = b.closest('.pic').dataset.id;
+    if (b.dataset.a === 'pin') { const un = ph.wallpaper.pinned === id; act('/api/wallpaper', { pinned: un ? '' : id }, un ? 'Pictures will change again' : 'Kept on Home'); }
+    if (b.dataset.a === 'del') {
+      if (Date.now() - (delArmed[id] || 0) > 4000) { delArmed[id] = Date.now(); b.textContent = '?'; toast('Tap ✕ again to remove it'); setTimeout(() => { if (b.isConnected) b.textContent = '✕'; }, 4000); return; }
+      act('/api/photo/remove', { id }, 'Removed', 'Could not remove it');
+    }
+  });
+  $('wOn').onchange = () => act('/api/wallpaper', { on: $('wOn').value === '1' }, 'Home updated');
+  $('wRot').onchange = () => act('/api/wallpaper', { rotate: +$('wRot').value }, 'Saved');
+  $('wOrd').onchange = () => act('/api/wallpaper', { shuffle: $('wOrd').value === '1' }, 'Saved');
+  $('sDelay').onchange = () => act('/api/saver', { delay: +$('sDelay').value }, 'Saved', 'The TV refused the change');
+  $('sSlide').onchange = () => act('/api/saver', { slide: +$('sSlide').value }, 'Saved');
+  $('sClock').onchange = () => act('/api/saver', { clock: $('sClock').value === '1' }, 'Saved');
+  $('sStart').onclick = () => act('/api/saver/start', {}, 'Screensaver on. Any remote button ends it.', 'Could not start it');
+
+  /** A picture from the phone, made just big enough for a 1920x1080 screen, as JPEG bytes. */
+  async function shrink(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+      const s = Math.min(1, Math.max(1920 / img.naturalWidth, 1080 / img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.86));
+      return new Uint8Array(await blob.arrayBuffer());
+    } finally { URL.revokeObjectURL(url); }
+  }
+  /** Encrypted, uploaded to ntfy.sh as a file (kept there a few hours), then the TV is told where to fetch it. */
+  async function uploadOne(file) {
+    const data = await encBytes(await shrink(file));
+    let res = null;
+    for (let attempt = 0; attempt < 3 && !res; attempt++) {
+      try { res = await fetch(RELAY + base + 'f?filename=p.bin', { method: 'POST', body: new Blob([data]) }); }
+      catch (e) { await new Promise(ok => setTimeout(ok, 1000 * (attempt + 1))); }
+    }
+    if (!res) throw new Error('No internet connection to the relay.');
+    if (!res.ok) throw new Error(res.status === 413 ? 'That picture is too large for the relay.' : res.status === 429 ? 'The relay is busy; wait a minute.' : 'Relay error ' + res.status);
+    const url = (await res.json())?.attachment?.url;
+    if (!url) throw new Error('The relay did not keep the picture.');
+    const r = await send('/api/photo/fetch', { url, name: file.name });
+    if (r === null) throw new Error('The TV did not answer. Is it on?');
+    if (!r.ok) throw new Error(r.err || 'The TV could not add it.');
+  }
+  $('picFile').onchange = async e => {
+    const files = [...e.target.files]; e.target.value = '';
+    let done = 0;
+    for (const f of files) {
+      toast(`Sending ${done + 1} of ${files.length}…`);
+      try { await uploadOne(f); done++; } catch (err) { toast(err.message || `Couldn't send ${f.name}`); break; }
+    }
+    if (done) toast(done === 1 ? 'Picture added' : `${done} pictures added`);
+  };
   document.querySelectorAll('[data-key]').forEach(b => b.addEventListener('click', () => {
     if (navigator.vibrate) navigator.vibrate(8);
     if (snap?.s && snap.s.control === false) toast('Remote control is off on the TV (accessibility service).');

@@ -365,7 +365,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     tab = b.dataset.tab;
     document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
     ['remote', 'history', 'later', 'apps'].forEach(t => $('tab-' + t).hidden = t !== tab);
-    if ((tab === 'apps' || tab === 'later' || tab === 'remote') && !apps.length) act('sync');
+    if ((tab === 'apps' || tab === 'later' || tab === 'remote') && (!apps.length || !inputs.length)) act('sync');
   });
   document.querySelectorAll('[data-key]').forEach(b => b.addEventListener('click', () => {
     if (navigator.vibrate) navigator.vibrate(8);
@@ -390,6 +390,7 @@ input,select{font:inherit;color:var(--fg);background:var(--card);border:1px soli
     await setup(code); listen(); $('pair').hidden = true; $('app').hidden = false; renderApps(); renderInputs(); render();
     const r = await act('sync');
     setConn(r !== null);
+    if (r !== null && !inputs.length) setTimeout(() => { if (!inputs.length) act('sync'); }, 6000);
     return r !== null;
   }
   $('code').addEventListener('input', e => {

@@ -220,22 +220,6 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
     <span class="pill"><span class="dot" id="dot"></span><span id="conn">Connecting…</span></span>
   </div>
 
-  <div class="card" id="nowCard">
-    <div class="now">
-      <div class="art" id="nowBadge"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg></div>
-      <div class="m"><div class="t" id="nowTitle">Waiting for the TV…</div><div class="s" id="nowSub"></div></div>
-      <button class="iconbtn" id="saveNow" aria-label="Save to watch later"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/><path d="M12 7v6M9 10h6"/></svg></button>
-    </div>
-    <div class="bar"><i id="nowBar"></i></div>
-    <div class="times"><span id="tPos"></span><span id="tDur"></span></div>
-    <div class="transport">
-      <button class="tb" data-cmd="prev" aria-label="Previous"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-      <button class="tb" data-cmd="back" aria-label="Back 10 seconds"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"/></svg></button>
-      <button class="tb play" data-cmd="toggle" aria-label="Play or pause"><svg class="f" viewBox="0 0 24 24" id="playIco"><path d="M8 5v14l11-7z"/></svg></button>
-      <button class="tb" data-cmd="fwd" aria-label="Forward 10 seconds"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2l5 4.5-5 4.5V8a5 5 0 1 0 5 5h2a7 7 0 1 1-7-8z"/></svg></button>
-      <button class="tb" data-cmd="next" aria-label="Next"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6zm10-12v12h2V6z"/></svg></button>
-    </div>
-  </div>
 
   <div id="tab-remote" class="pane">
     <div class="pad">
@@ -265,6 +249,23 @@ input:focus{border-color:rgba(139,124,255,.6);outline:none}
   </div>
 
   <div id="tab-history" class="pane" hidden>
+  <div class="card" id="nowCard" style="margin-bottom:18px">
+    <div class="now">
+      <div class="art" id="nowBadge"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg></div>
+      <div class="m"><div class="t" id="nowTitle">Waiting for the TV…</div><div class="s" id="nowSub"></div></div>
+      <button class="iconbtn" id="saveNow" aria-label="Save to watch later"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/><path d="M12 7v6M9 10h6"/></svg></button>
+    </div>
+    <div class="bar"><i id="nowBar"></i></div>
+    <div class="times"><span id="tPos"></span><span id="tDur"></span></div>
+    <div class="transport">
+      <button class="tb" data-cmd="prev" aria-label="Previous"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+      <button class="tb" data-cmd="back" aria-label="Back 10 seconds"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"/></svg></button>
+      <button class="tb play" data-cmd="toggle" aria-label="Play or pause"><svg class="f" viewBox="0 0 24 24" id="playIco"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="tb" data-cmd="fwd" aria-label="Forward 10 seconds"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2l5 4.5-5 4.5V8a5 5 0 1 0 5 5h2a7 7 0 1 1-7-8z"/></svg></button>
+      <button class="tb" data-cmd="next" aria-label="Next"><svg class="f" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6zm10-12v12h2V6z"/></svg></button>
+    </div>
+  </div>
+    <div class="sect"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Recently played</div>
     <div class="list" id="historyList"></div>
     <button class="link" id="clearHist" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Clear history</span></button>
   </div>
